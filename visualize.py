@@ -73,6 +73,8 @@ for i in range(n_iterations):
     caffe_data -= rho * caffe_data * diff
     # Visualize the caffe_data using visSquare function
 vis = visSquare(caffe_data.transpose(0,2,3,1))
+plt.imshow(vis)
+plt.savefig('1st_ex.png')
 plt.pause(1)
 
 
