@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 import copy
-
+import fractions
 # Make sure that caffe is on the python path:
 caffe_root = '../'  # this file is expected to be in {caffe_root}/examples
 import sys
@@ -38,26 +38,65 @@ caffeLabel[0,label_index,0,0] = 1;
 def vis_square(data, padsize=1, padval=0):
     data -= data.min()
     data /= data.max()
-    
+
     # force the number of filters to be square
     n = int(np.ceil(np.sqrt(data.shape[0])))
     padding = ((0, n ** 2 - data.shape[0]), (0, padsize), (0, padsize)) + ((0, 0),) * (data.ndim - 3)
     data = np.pad(data, padding, mode='constant', constant_values=(padval, padval))
-    
+
     # tile the filters into an image
     data = data.reshape((n, n) + data.shape[1:]).transpose((0, 2, 1, 3) + tuple(range(4, data.ndim + 1)))
     data = data.reshape((n * data.shape[1], n * data.shape[3]) + data.shape[4:])
-    
+
     plt.imshow(data,cmap=cm.gray)
 
-
+def factor_partial(N):
+    for R in xrange(int(np.sqrt(N)),1,-1):
+        if N%R == 0:
+            return R
 
 #Perform a forward pass with the data as the input image
-prediction = net.predict([input_image])  # predict takes any number of images, and formats them for the Caffe net automatically
+pr_result = net.predict([input_image])
 
 #Perform a backward pass for the cat class (281)
-bw = net.backward(**{net.outputs[0]: caffeLabel})
-diff = bw['data']
+bp_result = net.backward(**{net.outputs[0]:caffeLabel.reshape(1,1,1,1000)})
+diff = bp_result['data']
 
 
 # Plot each derivative of each layer and save each fig.
+
+for blobName, v in net.blobs.items():
+    print (blobName, v.diff.shape, v.diff.ndim)
+    if v.diff.ndim ==4:
+        grad = np.mean(np.absolute(v.diff), axis=1)
+        # Averaging by # channels or # kernels
+        grad = grad[0,:,:]
+    if v.diff.ndim ==2:
+        grad = np.absolute(v.diff)
+        grad = grad.reshape(factor_partial(v.diff.size), (v.diff.size)/factor_partial(v.diff.size))
+
+    print grad.shape
+    plt.imshow(grad, cmap=cm.gray_r)
+    fout = blobName+'.png'
+    plt.savefig(fout)
+    plt.pause(1)
+
+
+#        print grad.shape
+#    elif v.data.ndim==2:
+#        grad = np.mean
+#('data', (1, 3, 227, 227))
+#('conv1', (1, 96, 55, 55))
+#('pool1', (1, 96, 27, 27))
+#('norm1', (1, 96, 27, 27))
+#('conv2', (1, 256, 27, 27))
+#('pool2', (1, 256, 13, 13))
+#('norm2', (1, 256, 13, 13))
+#('conv3', (1, 384, 13, 13))
+#('conv4', (1, 384, 13, 13))
+#('conv5', (1, 256, 13, 13))
+#('pool5', (1, 256, 6, 6))
+#('fc6', (1, 4096))
+#('fc7', (1, 4096))
+#('fc8', (1, 1000))
+

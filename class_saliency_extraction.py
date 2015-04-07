@@ -33,36 +33,45 @@ caffeLabel = np.zeros((1,1000,1,1))
 caffeLabel[0,label_index,0,0] = 1;
 
 def visSquare(data1, padsize=1, padval=0):
-    data = copy.deepcopy(data1) 
+    data = copy.deepcopy(data1)
     data -= data.min()
     data /= data.max()
-    
+
     # force the number of filters to be square
     n = int(np.ceil(np.sqrt(data.shape[0])))
     padding = ((0, n ** 2 - data.shape[0]), (0, padsize), (0, padsize)) + ((0, 0),) * (data.ndim - 3)
     data = np.pad(data, padding, mode='constant', constant_values=(padval, padval))
-    
+
     # tile the filters into an image
     data = data.reshape((n, n) + data.shape[1:]).transpose((0, 2, 1, 3) + tuple(range(4, data.ndim + 1)))
     data = data.reshape((n * data.shape[1], n * data.shape[3]) + data.shape[4:])
-    
+
     plt.imshow(data)
     plt.show(block=False)
 
     return data
 
 #Perform a forward pass with the data as the input image
+pr_result = net.predict([input_image])
 
-
-#Perform a backward pass for the cat class (281)
-
-
+#Perform a backward pass for the cat class (281) // from previous code
+bp_result = net.backward(**{net.outputs[0]:caffeLabel.reshape(1,1,1,1000)})
 # Find the saliency map as described in the paper. Normalize the map and assign it to variabe "saliency"
 
+diff = bp_result['data']
+print (diff.shape) #1,3,227,227
+#Mij = max_c|w(i,j,c)|
+saliency = np.amax(np.absolute(diff),axis=1)
+print (saliency.shape) #1,227,227
+saliency = saliency[0,:,:]
+print (saliency.shape) #227,227
+print np.amax(saliency)
+saliency = saliency/np.amax(saliency)
+print np.amax(saliency)
 #display the saliency map
 plt.subplot(1,2,1)
 plt.imshow(saliency, cmap=cm.gray_r)
 plt.subplot(1,2,2)
 plt.imshow(net.transformer.deprocess('data', net.blobs['data'].data[0]))
 plt.show()
-
+plt.savefig('ex2.png')

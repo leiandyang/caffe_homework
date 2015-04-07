@@ -37,7 +37,7 @@ print "INPUT IMAGE"
 #plt.show()
 print(input_image.shape)
 
-rho = 1;
+rho = 100;
 
 #print(caffe_data.shape)  # :1,3,227,227
 #print(caffeLabel.shape)  # :1,1000,1,1
