@@ -25,8 +25,8 @@ net = caffe.Classifier(MODEL_FILE, PRETRAINED,
                        image_dims=(256, 256))
 input_image = caffe.io.load_image(IMAGE_FILE)
 input_image = input_image
-n_iterations = 10000
-#n_iterations = 10
+n_iterations = 100
+#n_iterations = 5000
 label_index = 281  # Index for cat class
 caffe_data = np.random.random((1,3,227,227))
 caffeLabel = np.zeros((1,1000,1,1))
@@ -37,7 +37,7 @@ print "INPUT IMAGE"
 #plt.show()
 print(input_image.shape)
 
-rho = 100;
+rho = 10000;
 
 #print(caffe_data.shape)  # :1,3,227,227
 #print(caffeLabel.shape)  # :1,1000,1,1
@@ -68,13 +68,19 @@ for i in range(n_iterations):
     fp_result = net.forward(data=caffe_data)
     # Perform Backward pass
     bp_result = net.backward(**{net.outputs[0]: caffeLabel.reshape(1,1,1,1000)})
+
     diff = bp_result['data']
+
+    score = fp_result['fc8']
+    if i%100 == 0:
+        print np.mean(score)
+
     # Perform Gradient ascent and update caffe_data
-    caffe_data -= rho * caffe_data * diff
+    caffe_data = caffe_data + diff * rho
     # Visualize the caffe_data using visSquare function
 vis = visSquare(caffe_data.transpose(0,2,3,1))
 plt.imshow(vis)
-plt.savefig('1st_ex.png')
+plt.savefig('kim_duckhwan_ex1.png')
 plt.pause(1)
 
 

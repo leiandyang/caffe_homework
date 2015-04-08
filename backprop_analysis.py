@@ -77,7 +77,7 @@ for blobName, v in net.blobs.items():
 
     print grad.shape
     plt.imshow(grad, cmap=cm.gray_r)
-    fout = blobName+'.png'
+    fout = 'kim_duckhwan_'+blobName+'.png'
     plt.savefig(fout)
     plt.pause(1)
 
